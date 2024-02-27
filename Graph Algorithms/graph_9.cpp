@@ -1,84 +1,82 @@
 #include <bits/stdc++.h>
-
 using namespace std;
+#define ll long long
 
+const int N = 2.5e3 + 1;
+vector <pair <int , int>> adj[N];
+vector <int> adjk[N];
+vector <ll> d(N , 1e17);
 
-int main()
-{
-    ios_base::sync_with_stdio(0), cin.tie(0), cout.tie(0);
+bool vis1[N] , vis2[N];
+
+int main(){
 #ifndef ONLINE_JUDGE
-    freopen("input.txt", "r", stdin);   // input.txt
-    freopen("output.txt", "w", stdout); // output.txt
+	freopen("input.txt","r",stdin);
+	freopen("output.txt","w",stdout);
 #endif
+	clock_t z = clock();
 
-    int n, m;
-    cin >> n >> m;
+	int n, m;
 
-    vector <pair <int, int>> adj[n];
+	cin >> n >> m;
 
-    for (int i = 0; i < m; i++){
-        int u, v , w;
-        cin >> u >> v >> w;
-        --u, --v;
-        adj[u].push_back({v , -w});
-    }
+	for (int i = 0; i < m; i++){
+		int u, v , w;
+		cin >> u >> v >> w;
 
-    vector <int> d(n , 1e8);
-
-    for (int i = 0; i < n - 1; i++){
-        for (int u = 0; u < n; u++){
-            for (auto p : adj[i]){
-                int w = p.second, v = p.first;
-                if (d[v] > d[u] + w){
-                    d[v] = d[u] + w;
-                } 
-            }
-        }
-    }
-
-    bool ok = false;
-
-    for (int u = 0; u < n; u++){
-        for (auto p : adj[u]){
-            int w = p.second, v = p.first;
-            if (d[v] > d[u] + w){
-                ok = true;
-                break;
-            } 
-        }
-        if (ok) break;
-    }
-
-    if (ok) cout << -1 << endl;
-    else {
-        vector <long long> dis(n , 1e18);
-        dis[0] = 0;
+		--u, --v;
+		adj[u].push_back({v , -w});
+		adjk[v].push_back(u);
+	}
 
 
-        using pii = pair<long long, int>;
-        priority_queue<pii, vector<pii>, greater<pii>> pq;
+	auto dfss = [&] (auto &self, int u)->void{
+		vis1[u] = 1;
+		for (auto p : adj[u]){
+			if (!vis1[p.first]){
+				self(self, p.first);
+			}
+		}
+	};
+	auto dfse = [&] (auto &self, int u) -> void{
+		vis2[u] = 1;
+		for (auto v : adjk[u]){
+			if (!vis2[v]){
+				self(self, v);
+			}
+		}
+	};
 
-        pq.push({0, 0});
-        while(!pq.empty()){
-            int u = pq.top().second;
-            long long d_v = pq.top().first;
-            pq.pop();
-            if (d_v != dis[u]) continue;
-            for (auto p : adj[u]){
-                int to = p.first, d = p.second;
-                if (dis[to] > dis[u] + d) {
-                    dis[to] = dis[u] + d;
-                    pq.push({dis[to], to});
-                } 
-            } 
-        }
+	dfss(dfss , 0);
+	dfse(dfse , n - 1);
 
-        cout << -dis[n - 1] << endl;
-    }
+	d[0] = 0;
 
+	for (int i = 0; i < n - 1; i++){
+		for (int u = 0; u < n; u++){
+			for (auto p : adj[u]){
+				if (d[u] >= 1e17) continue;
+				int v = p.first , w = p.second;
+				if (d[v] > d[u] + w) d[v] = d[u] + w; 
+			}
+		}
+	}
 
+	bool ok = false;
 
+	for (int u = 0; u < n; u++){
+		for (auto p : adj[u]){
+			int v = p.first, w = p.second;
+			if (d[v] >= 1e17) continue;
+			if (d[v] > d[u] + w and vis1[v] and vis2[v]){
+				ok = true;
+			}
+		}
+	}
 
+	if (ok) cout << -1 << endl;
+	else cout << -1LL * d[n - 1] << endl;
 
-    return 0;
+	cerr << "Run Time : " << ((double)(clock() - z) / CLOCKS_PER_SEC);
+
 }
